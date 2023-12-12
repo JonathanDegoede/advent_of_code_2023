@@ -1,5 +1,7 @@
+import { RunDay3 } from "./day3/day3";
 import { RunDay1 } from "./day1/day1";
 import { RunDay2 } from "./day2/day2";
 
 // RunDay1();
-RunDay2();
+// RunDay2();
+RunDay3();
