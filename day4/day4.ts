@@ -19,6 +19,7 @@ import { inputDay4Example } from "./inputs/day4_example";
 type cardInfos = {
   winningNumbers: number[];
   myNumbers: number[];
+  copiesAmount: number;
 };
 
 const parseLines = (input: string): cardInfos[] => {
@@ -39,6 +40,7 @@ const parseLines = (input: string): cardInfos[] => {
       return {
         winningNumbers: toNumber(winningNumbers),
         myNumbers: toNumber(myNumbers),
+        copiesAmount: 1,
       };
     });
 };
@@ -59,10 +61,40 @@ const Day4 = (input: string) => {
   return cardPoints.reduce((acc, points) => acc + points, 0);
 };
 
+const Day4Part2 = (input: string) => {
+  const cards = parseLines(input);
+
+  cards.forEach((card, idx) => {
+    const matchingNumbers = card.myNumbers.reduce((acc, myNumber) => {
+      if (card.winningNumbers.includes(myNumber)) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+
+    const indexesToCopy = Array.from(
+      { length: matchingNumbers },
+      (_, i) => idx + i + 1
+    );
+
+    indexesToCopy.forEach((index) => {
+      cards[index].copiesAmount += card.copiesAmount;
+    });
+
+    return cards;
+  });
+
+  return cards.reduce((acc, card) => acc + card.copiesAmount, 0);
+};
+
 export const RunDay4 = () => {
   console.log("Day 4");
 
   console.log("Part 1");
   console.log(Day4(inputDay4Example));
   console.log(Day4(inputDay4));
+
+  console.log("Part 2");
+  console.log(Day4Part2(inputDay4Example));
+  console.log(Day4Part2(inputDay4));
 };
