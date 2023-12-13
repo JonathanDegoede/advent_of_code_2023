@@ -1,4 +1,5 @@
-export const inputDay3Example = `467..114..
+export const inputDay3Example = `
+467..114..
 ...*......
 ..35..633.
 ......#...

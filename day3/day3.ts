@@ -22,11 +22,18 @@ Of course, the actual engine schematic is much larger. What is the sum of all of
 import { inputDay3 } from "./inputs/day3";
 import { inputDay3Example } from "./inputs/day3_example";
 
+type SymbolInfos = {
+  x: number;
+  y: number;
+  value: string;
+};
+
 type NumberInfos = {
   startPositionX: number;
   endPositionX: number;
   y: number;
   value: number;
+  adjacentSymbol?: SymbolInfos;
 };
 
 const parseLines = (input: string) => {
@@ -66,48 +73,106 @@ const getCharAt = (matrix: string[][], x: number, y: number) => {
   return matrix[y][x];
 };
 
-const isAdjacentToSymbol = (matrix: string[][], x: number, y: number) => {
-  const adjacent = [
-    getCharAt(matrix, x - 1, y - 1),
-    getCharAt(matrix, x, y - 1),
-    getCharAt(matrix, x + 1, y - 1),
-    getCharAt(matrix, x - 1, y),
-    getCharAt(matrix, x + 1, y),
-    getCharAt(matrix, x - 1, y + 1),
-    getCharAt(matrix, x, y + 1),
-    getCharAt(matrix, x + 1, y + 1),
+const getAdjacentCoords = (x: number, y: number) => {
+  return [
+    { x: x - 1, y: y - 1 },
+    { x: x, y: y - 1 },
+    { x: x + 1, y: y - 1 },
+    { x: x - 1, y: y },
+    { x: x + 1, y: y },
+    { x: x - 1, y: y + 1 },
+    { x: x, y: y + 1 },
+    { x: x + 1, y: y + 1 },
   ];
-
-  return adjacent.some((char) => isSymbol(char));
 };
 
-const Day3 = (input: string) => {
-  const lines = parseLines(input);
-  const numbers = lines.reduce((acc, line, idx) => {
-    return [...acc, ...findNumbers(line, idx)];
-  }, []);
-  const matrix = lines.map((line) => line.split(""));
+const getAdjacentChars = (matrix: string[][], x: number, y: number) => {
+  return getAdjacentCoords(x, y).map((p) => ({
+    x: p.x,
+    y: p.y,
+    value: getCharAt(matrix, p.x, p.y),
+  }));
+};
 
-  const partNumbers = numbers
+const findAdjacentSymbol = (
+  matrix: string[][],
+  x: number,
+  y: number
+): SymbolInfos => {
+  return getAdjacentChars(matrix, x, y).find((char) => isSymbol(char.value));
+};
+
+const getPartNumbers = (numbers: NumberInfos[], matrix: string[][]) => {
+  return numbers
     .map((number) => {
       for (let x = number.startPositionX; x <= number.endPositionX; x++) {
-        if (isAdjacentToSymbol(matrix, x, number.y)) {
-          return number;
+        const adjacentSymbol = findAdjacentSymbol(matrix, x, number.y);
+        if (adjacentSymbol) {
+          return {
+            ...number,
+            adjacentSymbol: adjacentSymbol,
+          };
         }
       }
       return null;
     })
     .filter((n) => n !== null);
+};
+
+const getNumbersFrom = (lines: string[]) => {
+  return lines.reduce((acc: NumberInfos[], line, y) => {
+    return [...acc, ...findNumbers(line, y)];
+  }, []);
+};
+
+const Day3 = (input: string) => {
+  const lines = parseLines(input);
+  const numbers = getNumbersFrom(lines);
+  const matrix = lines.map((line) => line.split(""));
+
+  const partNumbers = getPartNumbers(numbers, matrix);
 
   return partNumbers.reduce((acc, number) => {
     return acc + number.value;
   }, 0);
 };
 
+const Day3Part2 = (input: string) => {
+  const lines = parseLines(input);
+  const numbers = getNumbersFrom(lines);
+  const matrix = lines.map((line) => line.split(""));
+
+  const partNumbers = getPartNumbers(numbers, matrix);
+  const adjacentToGears = partNumbers.filter(
+    (pn) => pn.adjacentSymbol.value === "*"
+  );
+
+  const gears = adjacentToGears
+    .map((pn) => pn.adjacentSymbol)
+    .filter(
+      (value, index, self) =>
+        self.findIndex((v) => v.x === value.x && v.y === value.y) === index
+    );
+
+  const connectedByGears = gears
+    .map((gear) => {
+      return adjacentToGears.filter(
+        (pn) => pn.adjacentSymbol.x === gear.x && pn.adjacentSymbol.y === gear.y
+      );
+    })
+    .filter((g) => g.length > 1);
+
+  return connectedByGears
+    .map((g: NumberInfos[]) => g[0].value * g[1].value)
+    .reduce((acc, value) => acc + value, 0);
+};
+
 export const RunDay3 = () => {
   console.log("Day 3");
 
   console.log("Part 1");
-  console.log(Day3(inputDay3Example));
   console.log(Day3(inputDay3));
+
+  console.log("Part 2");
+  console.log(Day3Part2(inputDay3));
 };
