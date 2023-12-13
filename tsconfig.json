@@ -1,4 +1,0 @@
-{
-  "include": ["./*", "day1/inputs", "day1/day1.ts"],
-  "exclude": ["day1/inputs/*", "./node_modules/*"]
-}
