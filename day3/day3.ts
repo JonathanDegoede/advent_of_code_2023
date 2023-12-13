@@ -22,6 +22,13 @@ Of course, the actual engine schematic is much larger. What is the sum of all of
 import { inputDay3 } from "./inputs/day3";
 import { inputDay3Example } from "./inputs/day3_example";
 
+type NumberInfos = {
+  startPositionX: number;
+  endPositionX: number;
+  y: number;
+  value: number;
+};
+
 const parseLines = (input: string) => {
   return input.trim().replace(/\./g, " ").split("\n");
 };
@@ -31,12 +38,22 @@ const findNumbers = (input: string, y: number) => {
 
   if (matches === null) return [];
 
-  return matches.map((match) => ({
-    startPositionX: input.indexOf(match),
-    endPositionX: input.indexOf(match) + match.length - 1,
-    y,
-    value: parseInt(match),
-  }));
+  return matches.reduce((acc: NumberInfos[], match) => {
+    const lastMatch = acc.length !== 0 && acc[acc.length - 1];
+    const lastMatchEndPositionX = lastMatch ? lastMatch.endPositionX : 0;
+
+    const startPosX = input.indexOf(match, lastMatchEndPositionX); //This ensures that we dont get the position of a previous match
+
+    return [
+      ...acc,
+      {
+        startPositionX: startPosX,
+        endPositionX: startPosX + match.length - 1,
+        y,
+        value: parseInt(match),
+      },
+    ];
+  }, []);
 };
 
 const isSymbol = (char: string) => {
@@ -44,7 +61,7 @@ const isSymbol = (char: string) => {
 };
 
 const getCharAt = (matrix: string[][], x: number, y: number) => {
-  if (x < 0 || y < 0 || x >= matrix.length || y >= matrix[0].length)
+  if (x < 0 || y < 0 || x >= matrix[0].length || y >= matrix.length)
     return null;
   return matrix[y][x];
 };
@@ -66,12 +83,10 @@ const isAdjacentToSymbol = (matrix: string[][], x: number, y: number) => {
 
 const Day3 = (input: string) => {
   const lines = parseLines(input);
-  const numbers = lines.reduce((acc, line) => {
-    return [...acc, ...findNumbers(line, acc.length)];
+  const numbers = lines.reduce((acc, line, idx) => {
+    return [...acc, ...findNumbers(line, idx)];
   }, []);
   const matrix = lines.map((line) => line.split(""));
-
-  console.log(matrix);
 
   const partNumbers = numbers
     .map((number) => {
