@@ -16,6 +16,12 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11*/
 import { inputDay5 } from "./inputs/day5";
 import { inputDay5Example } from "./inputs/day5_example";
 
+type MappingInfos = {
+  lowerBound: number;
+  upperBound: number;
+  offset: number;
+};
+
 const parseLines = (input: string) => {
   const lines = input.trim().split("\n");
 
@@ -25,57 +31,36 @@ const parseLines = (input: string) => {
     .filter((x) => !isNaN(x));
 
   const rawMappings = lines.splice(2).filter((l) => {
-    return !isNaN(parseInt(l[0])) || l === "";
+    return !isNaN(parseInt(l[0]));
   });
 
-  const partialMappings = [];
-  let group = [];
-
-  rawMappings.forEach((m) => {
-    if (m !== "") {
-      group.push(m);
-    } else {
-      partialMappings.push(group);
-      group = [];
-    }
+  const mappingsInfos: MappingInfos[] = rawMappings.map((rawMapping) => {
+    const [destination, source, length] = rawMapping
+      .split(" ")
+      .map((x) => parseInt(x));
+    return {
+      lowerBound: source,
+      upperBound: source + length - 1,
+      offset: destination - source,
+    };
   });
 
   return {
     seeds,
-    partialMappings,
+    mappingsInfos,
   };
 };
 
-type FullMapping = Map<number, number>;
-
-const getFullMapping = (mappings: string[]): FullMapping => {
-  const fullMapping: FullMapping = new Map<number, number>();
-
-  mappings.forEach((m) => {
-    const numbers = m.split(" ").map((x) => parseInt(x));
-    const [destination, source, length] = numbers;
-
-    for (let i = 0; i < length; i++) {
-      fullMapping.set(source + i, destination + i);
-    }
-  });
-
-  return fullMapping;
-};
-
 const Day5 = (input: string) => {
-  const { seeds, partialMappings } = parseLines(input);
+  const { seeds, mappingsInfos } = parseLines(input);
 
-  const fullMappings = partialMappings.map((m) => getFullMapping(m));
-
-  const locations = seeds.map((seed) => {
-    let mappedSeed = seed;
-
-    fullMappings.forEach((m) => {
-      mappedSeed = m.get(mappedSeed) ?? mappedSeed;
-    });
-
-    return mappedSeed;
+  const locations: number[] = seeds.map((seed) => {
+    return mappingsInfos.reduce((acc, mapping) => {
+      if (acc >= mapping.lowerBound && acc <= mapping.upperBound) {
+        return acc + mapping.offset;
+      }
+      return acc;
+    }, seed);
   });
 
   return locations.sort((a, b) => a - b)[0];
@@ -86,5 +71,5 @@ export const RunDay5 = () => {
 
   console.log("Part 1");
   console.log(Day5(inputDay5Example));
-  console.log(Day5(inputDay5));
+  // console.log(Day5(inputDay5));
 };
