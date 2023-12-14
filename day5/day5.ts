@@ -20,6 +20,12 @@ type MappingInfos = {
   lowerBound: number;
   upperBound: number;
   offset: number;
+  group: string;
+};
+
+type RawMapping = {
+  line: string;
+  group: string;
 };
 
 const parseLines = (input: string) => {
@@ -30,18 +36,33 @@ const parseLines = (input: string) => {
     .map((x) => parseInt(x))
     .filter((x) => !isNaN(x));
 
-  const rawMappings = lines.splice(2).filter((l) => {
-    return !isNaN(parseInt(l[0]));
+  const rawMappings: RawMapping[] = [];
+
+  const regexAlphabet = /[a-z]/;
+  const numericRegex = /[0-9]/;
+  let currentGroup = undefined;
+  lines.splice(2).forEach((line) => {
+    if (regexAlphabet.test(line[0])) {
+      currentGroup = line.split(" ")[0];
+    }
+
+    if (numericRegex.test(line[0])) {
+      rawMappings.push({
+        line,
+        group: currentGroup,
+      });
+    }
   });
 
   const mappingsInfos: MappingInfos[] = rawMappings.map((rawMapping) => {
-    const [destination, source, length] = rawMapping
+    const [destination, source, length] = rawMapping.line
       .split(" ")
       .map((x) => parseInt(x));
     return {
       lowerBound: source,
       upperBound: source + length - 1,
       offset: destination - source,
+      group: rawMapping.group,
     };
   });
 
@@ -55,8 +76,14 @@ const Day5 = (input: string) => {
   const { seeds, mappingsInfos } = parseLines(input);
 
   const locations: number[] = seeds.map((seed) => {
+    let mappedForGroup: string = undefined;
     return mappingsInfos.reduce((acc, mapping) => {
+      if (mappedForGroup === mapping.group) {
+        return acc;
+      }
+
       if (acc >= mapping.lowerBound && acc <= mapping.upperBound) {
+        mappedForGroup = mapping.group;
         return acc + mapping.offset;
       }
       return acc;
@@ -67,9 +94,9 @@ const Day5 = (input: string) => {
 };
 
 export const RunDay5 = () => {
-  console.log("Day 4");
+  console.log("Day 5");
 
   console.log("Part 1");
   console.log(Day5(inputDay5Example));
-  // console.log(Day5(inputDay5));
+  console.log(Day5(inputDay5));
 };
